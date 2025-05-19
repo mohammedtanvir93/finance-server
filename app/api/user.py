@@ -3,12 +3,14 @@ from app.crud import user as crud_user
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.user import UserCreate, UserReadDetails, UserReadList, UserUpdate
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from uuid import UUID
+from uuid import UUID, uuid4
+import os
+from app.utils.emails.welcome import send_welcome_email
 
 class PaginatedUserListResponse(BaseModel):
     data: List[UserReadList]
@@ -43,12 +45,23 @@ def ensure_email_unique(db: Session, email: str, exclude_user_id: UUID = None) -
         )
 
 @router.post("/", response_model=UserReadDetails)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+def create_user(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     ensure_role_exists(db, user.role_id)
     ensure_email_unique(db, user.email)
+    
+    verification_token = str(uuid4())
+    verification_link = f"{os.getenv('CLIENT_APP_HOST')}/verify-email?token={verification_token}"
 
-    db_user = crud_user.create_user(db, user)
-    return db_user
+    created_user = crud_user.create_user(db, user, verification_token)
+    
+    background_tasks.add_task(
+        send_welcome_email,
+        email=created_user.email,
+        username=created_user.fullname,
+        verification_link=verification_link
+    )
+    
+    return created_user
 
 @router.patch("/{user_id}", response_model=UserReadDetails)
 def update_user(user_id: UUID, user_data: UserUpdate, db: Session = Depends(get_db)):

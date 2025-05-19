@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
+from uuid import uuid4
 
-def create_user(db: Session, user: UserCreate) -> User:
-    db_user = User(**user.dict(), created_at=datetime.utcnow())
+def create_user(db: Session, user: UserCreate, change_password_token: str) -> User:
+    db_user = User(**user.dict(), created_at=datetime.utcnow(), change_password_token=change_password_token)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
