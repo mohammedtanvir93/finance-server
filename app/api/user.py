@@ -3,6 +3,7 @@ from app.crud import user as crud_user
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.user import UserCreate, UserReadDetails, UserReadList, UserUpdate
+from app.utils.emails.welcome import send_welcome_email
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -10,7 +11,6 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from uuid import UUID, uuid4
 import os
-from app.utils.emails.welcome import send_welcome_email
 
 class PaginatedUserListResponse(BaseModel):
     data: List[UserReadList]

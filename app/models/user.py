@@ -5,7 +5,6 @@ from sqlalchemy.orm import relationship
 import enum
 import uuid
 
-# Define status enum
 class UserStatus(enum.Enum):
     ACTIVE = "ACTIVE"
     PENDING = "PENDING"

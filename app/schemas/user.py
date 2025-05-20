@@ -8,7 +8,7 @@ from uuid import UUID
 
 class UserBase(BaseModel):
     email: str = Field(..., description="Email address")
-    fullname: str = Field(..., description="Full name")
+    fullname: str = Field(..., description="Fullname")
     role_id: UUID
 
     @field_validator("email")
