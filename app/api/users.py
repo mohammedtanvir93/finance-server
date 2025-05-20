@@ -5,7 +5,6 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserReadDetails, UserReadList, UserUpdate
 from app.utils.emails.welcome import send_welcome_email
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional, List
@@ -18,7 +17,10 @@ class PaginatedUserListResponse(BaseModel):
     limit: int
     skip: int
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(
+    prefix="/users", 
+    tags=["users"]
+)
 
 def get_db():
     db = SessionLocal()
