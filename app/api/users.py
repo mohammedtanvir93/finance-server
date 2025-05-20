@@ -92,9 +92,18 @@ def read_users(
     skip: int = 0,
     limit: int = 10,
     search: Optional[str] = Query(None, description="Search by name, email, role title, or status"),
+    sort_by: Optional[str] = Query("created_at", description="Field to sort by (e.g., fullname, email, created_at)"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
     db: Session = Depends(get_db)
 ):
-    users, total = crud_user.get_users(db, skip=skip, limit=limit, search=search)
+    users, total = crud_user.get_users(
+        db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
     return {
         "data": users,
         "total": total,

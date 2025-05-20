@@ -4,7 +4,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from datetime import datetime
 from datetime import datetime
-from sqlalchemy import or_, func, String
+from sqlalchemy import or_, func, String, asc, desc
 from sqlalchemy.orm import Session
 from typing import Optional
 from uuid import UUID
@@ -29,7 +29,14 @@ def update_user(db: Session, db_user: User, user_data: UserUpdate) -> User:
 def get_user(db: Session, user_id: UUID) -> User:
     return db.query(User).filter(User.id == user_id).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 10, search: Optional[str] = None):
+def get_users(
+    db: Session,
+    skip: int = 0,
+    limit: int = 10,
+    search: Optional[str] = None,
+    sort_by: Optional[str] = "created_at",
+    sort_order: Optional[str] = "desc"
+):
     query = db.query(User).join(User.role)
 
     if search:
@@ -43,9 +50,22 @@ def get_users(db: Session, skip: int = 0, limit: int = 10, search: Optional[str]
             )
         )
 
-    total = query.count()
-    users = query.offset(skip).limit(limit).all()
+    total = query.count() 
 
+    sort_fields = {
+        "fullname": User.fullname,
+        "email": User.email,
+        "created_at": User.created_at,
+        "joined_at": User.joined_at,
+        "status": User.status,
+        "role": Role.title,
+    }
+
+    sort_column = sort_fields.get(sort_by, User.created_at)
+    order_func = asc if sort_order.lower() == "asc" else desc
+    query = query.order_by(order_func(sort_column))
+
+    users = query.offset(skip).limit(limit).all()
     return users, total
 
 def delete_user(db: Session, user: User):
