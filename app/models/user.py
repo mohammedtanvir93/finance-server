@@ -16,6 +16,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False)
     fullname = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=True)
     change_password_token = Column(String(255), nullable=True)
     role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
     status = Column(Enum(UserStatus, name="user_status"), nullable=False, default=UserStatus.PENDING)

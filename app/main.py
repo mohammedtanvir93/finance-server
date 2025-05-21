@@ -1,4 +1,4 @@
-from app.api import roles, users
+from app.api import roles, users, auth
 from app.core.database import Base, engine
 from app.models import role
 from fastapi import FastAPI, Request
@@ -33,6 +33,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"errors": errors}
     )
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(roles.router, prefix="/api")
 
