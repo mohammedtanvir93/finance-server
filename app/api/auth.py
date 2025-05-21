@@ -30,10 +30,10 @@ def change_password_with_token(
     password_data: ChangePasswordByTokenRequest,
     db: Session = Depends(get_db)
 ):
-    result = auth_service.change_user_password_with_token(
+    token = auth_service.change_user_password_with_token(
         db,
         change_password_token=change_password_token,
         new_password=password_data.new_password,
         retype_new_password=password_data.retype_new_password
     )
-    return result
+    return TokenResponse(access_token=token)

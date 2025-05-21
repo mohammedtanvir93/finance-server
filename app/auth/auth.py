@@ -38,4 +38,6 @@ def change_user_password_with_token(db: Session, change_password_token: str, new
     
     db.commit()
     db.refresh(user)
-    return {"message": "Password updated successfully"}
+    
+    access_token = create_access_token({"sub": str(user.id)})
+    return access_token
