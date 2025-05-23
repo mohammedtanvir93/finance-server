@@ -3,7 +3,7 @@ from app.core.database import SessionLocal
 from app.crud import user as crud_user
 from app.models.role import Role
 from app.models.user import User
-from app.schemas.user import UserCreate, UserReadDetails, UserReadList, UserUpdate
+from app.schemas.user import UserCreate, UserReadDetails, UserReadList, UserUpdate, UserSelfUpdate
 from app.utils.emails.welcome import send_welcome_email
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from pydantic import BaseModel
@@ -65,6 +65,22 @@ def create_user(user: UserCreate, background_tasks: BackgroundTasks, db: Session
     )
     
     return created_user
+
+@router.patch("/me", response_model=UserReadDetails)
+def update_current_user(
+    user_data: UserSelfUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    db_user = db.query(User).filter(User.id == current_user.id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_data.email and user_data.email != db_user.email:
+        ensure_email_unique(db, user_data.email, exclude_user_id=db_user.id)
+
+    updated_user = crud_user.update_user(db, db_user, user_data)
+    return updated_user
 
 @router.patch("/{user_id}", response_model=UserReadDetails)
 def update_user(user_id: UUID, user_data: UserUpdate, db: Session = Depends(get_db)):

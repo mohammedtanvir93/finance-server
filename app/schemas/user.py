@@ -55,3 +55,27 @@ class UserReadDetails(UserReadBase):
 
 class UserReadList(UserReadBase):
     role: RoleReadBase
+
+class UserSelfUpdate(BaseModel):
+    email: Optional[str] = None
+    fullname: Optional[str] = None
+
+    @field_validator("email")
+    def validate_email(cls, v: str) -> str:
+        if len(v) < 2:
+            raise ValueError("Email must be at least 2 characters long")
+        if len(v) > 255:
+            raise ValueError("Email must not exceed 255 characters")
+        try:
+            validate_email(v)
+        except EmailNotValidError:
+            raise ValueError("Please provide a valid email address")
+        return v
+
+    @field_validator("fullname")
+    def validate_fullname(cls, v: str) -> str:
+        if len(v) < 2:
+            raise ValueError("Full name must be at least 2 characters long")
+        if len(v) > 255:
+            raise ValueError("Full name must not exceed 255 characters")
+        return v
