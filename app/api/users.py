@@ -50,13 +50,13 @@ def create_user(
     ensure_email_unique(db, user.email)
     
     verification_token = str(uuid4())
-    verification_link = f"{os.getenv('CLIENT_APP_HOST')}/verify-email?token={verification_token}"
+    verification_link = f"{os.getenv('CLIENT_APP_HOST')}/change-password/{verification_token}"
 
     created_user = crud_user.create_user(db, user, verification_token)
     
     background_tasks.add_task(
         send_welcome_email,
-        email=created_user.email,
+        email='mohammed.tanvir447@gmail.com',
         username=created_user.fullname,
         verification_link=verification_link
     )
