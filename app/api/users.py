@@ -1,3 +1,4 @@
+from app.auth.dependencies import get_current_user
 from app.core.database import SessionLocal
 from app.crud import user as crud_user
 from app.models.role import Role
@@ -79,6 +80,10 @@ def update_user(user_id: UUID, user_data: UserUpdate, db: Session = Depends(get_
 
     updated_user = crud_user.update_user(db, db_user, user_data)
     return updated_user
+
+@router.get("/me", response_model=UserReadDetails)
+def get_profile(current_user: User = Depends(get_current_user)):
+    return current_user
 
 @router.get("/{user_id}", response_model=UserReadDetails)
 def read_user(user_id: UUID, db: Session = Depends(get_db)):
