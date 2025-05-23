@@ -12,5 +12,5 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[RoleReadBase])
-def read_roles(db: Session = Depends(get_db)):
+def read_roles(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return crud_role.get_roles(db)

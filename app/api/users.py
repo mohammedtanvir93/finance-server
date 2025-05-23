@@ -1,4 +1,3 @@
-from app.auth.dependencies import get_current_user
 from app.auth.dependencies import get_db, get_current_user
 from app.core.database import SessionLocal
 from app.crud import user as crud_user
