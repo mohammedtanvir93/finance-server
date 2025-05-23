@@ -1,4 +1,5 @@
 from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_db, get_current_user
 from app.core.database import SessionLocal
 from app.crud import user as crud_user
 from app.models.role import Role
@@ -23,13 +24,6 @@ router = APIRouter(
     tags=["users"]
 )
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 def ensure_role_exists(db: Session, role_id: UUID) -> None:
     if not db.query(Role).filter(Role.id == role_id).first():
         raise HTTPException(
@@ -48,7 +42,11 @@ def ensure_email_unique(db: Session, email: str, exclude_user_id: UUID = None) -
         )
 
 @router.post("/", response_model=UserReadDetails)
-def create_user(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def create_user(
+    user: UserCreate, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):
     ensure_role_exists(db, user.role_id)
     ensure_email_unique(db, user.email)
     
@@ -69,8 +67,8 @@ def create_user(user: UserCreate, background_tasks: BackgroundTasks, db: Session
 @router.patch("/me", response_model=UserReadDetails)
 def update_current_user(
     user_data: UserSelfUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     db_user = db.query(User).filter(User.id == current_user.id).first()
     if not db_user:
@@ -83,7 +81,11 @@ def update_current_user(
     return updated_user
 
 @router.patch("/{user_id}", response_model=UserReadDetails)
-def update_user(user_id: UUID, user_data: UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    user_id: UUID, 
+    user_data: UserUpdate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -102,7 +104,10 @@ def get_profile(current_user: User = Depends(get_current_user)):
     return current_user
 
 @router.get("/{user_id}", response_model=UserReadDetails)
-def read_user(user_id: UUID, db: Session = Depends(get_db)):
+def read_user(
+    user_id: UUID, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):
     db_user = crud_user.get_user(db, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -115,7 +120,8 @@ def read_users(
     search: Optional[str] = Query(None, description="Search by name, email, role title, or status"),
     sort_by: Optional[str] = Query("created_at", description="Field to sort by (e.g., fullname, email, created_at)"),
     sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     users, total = crud_user.get_users(
         db,
@@ -133,7 +139,10 @@ def read_users(
     }
     
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: UUID, db: Session = Depends(get_db)):
+def delete_user(
+    user_id: UUID, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
