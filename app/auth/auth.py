@@ -7,7 +7,7 @@ from uuid import UUID
 def authenticate_user(db: Session, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.password or ""):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Invalid credentials")
     return user
 
 def login_user(db: Session, email: str, password: str):
@@ -18,7 +18,7 @@ def login_user(db: Session, email: str, password: str):
 def change_user_password(db: Session, user_id: UUID, old_password: str, new_password: str):
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not verify_password(old_password, user.password or ""):
-        raise HTTPException(status_code=401, detail="Old password is incorrect")
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
 
     user.password = hash_password(new_password)
     db.commit()
