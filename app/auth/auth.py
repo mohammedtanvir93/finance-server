@@ -34,6 +34,7 @@ def change_user_password_with_token(db: Session, change_password_token: str, new
         raise HTTPException(status_code=400, detail="Passwords do not match")
     
     user.change_password_token = None  
+    user.status = 'ACTIVE'
     user.password = hash_password(new_password)  
     
     db.commit()
