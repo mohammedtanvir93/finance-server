@@ -1,4 +1,4 @@
-from app.auth.dependencies import get_db, get_current_user
+from app.auth.dependencies import check_permission, get_db, get_current_user
 from app.core.database import SessionLocal
 from app.crud import user as crud_user
 from app.models.role import Role
@@ -46,6 +46,10 @@ def create_user(
     background_tasks: BackgroundTasks, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)):
+    
+    if not check_permission(current_user, name="create:users"):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
     ensure_role_exists(db, user.role_id)
     ensure_email_unique(db, user.email)
     
@@ -85,6 +89,14 @@ def update_user(
     user_data: UserUpdate, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)):
+    
+    if not (
+        check_permission(current_user, name="edit:users") or
+        (check_permission(current_user, name="editOwn:users", target_id=user_id, provided_id=current_user.id))
+    ):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -107,6 +119,14 @@ def read_user(
     user_id: UUID, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)):
+    
+    if not (
+        check_permission(current_user, name="viewDetails:users") or
+        (check_permission(current_user, name="viewOwnDetails:users", target_id=user_id, provided_id=current_user.id))
+    ):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+
     db_user = crud_user.get_user(db, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -122,13 +142,26 @@ def read_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    
+    view_own = check_permission(current_user, name="viewOwn:users")
+    
+    if not (
+        check_permission(current_user, name="view:users") or view_own
+    ):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    user_filter_id = current_user.id if view_own else None
+    
+    print(f"User ID : {user_filter_id}")
+    
     users, total = crud_user.get_users(
         db,
         skip=skip,
         limit=limit,
         search=search,
         sort_by=sort_by,
-        sort_order=sort_order
+        sort_order=sort_order,
+        user_id=user_filter_id
     )
     return {
         "data": users,
@@ -142,6 +175,13 @@ def delete_user(
     user_id: UUID, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)):
+    
+    if not (
+        check_permission(current_user, name="delete:users") or
+        (check_permission(current_user, name="deleteOwn:users", target_id=user_id, provided_id=current_user.id))
+    ):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")

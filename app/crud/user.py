@@ -35,9 +35,13 @@ def get_users(
     limit: int = 10,
     search: Optional[str] = None,
     sort_by: Optional[str] = "created_at",
-    sort_order: Optional[str] = "desc"
+    sort_order: Optional[str] = "desc",
+    user_id: Optional[str] = None
 ):
     query = db.query(User).join(User.role)
+    
+    if user_id:
+        query = query.filter(User.id == user_id)
 
     if search:
         ilike_value = f"%{search}%"
