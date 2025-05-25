@@ -5,7 +5,7 @@ from app.auth.security import verify_password, hash_password, create_access_toke
 from uuid import UUID
 
 def authenticate_user(db: Session, email: str, password: str):
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email == email, User.status == 'ACTIVE').first()
     if not user or not verify_password(password, user.password or ""):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     return user
